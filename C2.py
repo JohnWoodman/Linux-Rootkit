@@ -12,6 +12,8 @@ class PostExploitMenu(cmd2.Cmd):
 
         self.self_in_py = True
 
+        self.prompt = '(post-exploit) > '
+
     @cmd2.with_category(POST_EXPLOIT_CATEGORY)
     def do_intro(self, _):
         self.poutput(self.intro)
@@ -25,7 +27,7 @@ class PostExploitMenu(cmd2.Cmd):
         else:
             self.poutput("[-] Error setting command in Cookie")
 
-@cmd2_submenu.AddSubmenu(PostExploitMenu(), command='post-exploit', aliases=('post-explot_alias'))
+@cmd2_submenu.AddSubmenu(PostExploitMenu(), command='post-exploit', reformat_prompt="{super_prompt[0]}{super_prompt[1]}{super_prompt[2]}{super_prompt[3]}{super_prompt[4]}{super_prompt[5]} {sub_prompt}")
 class TopLevel(cmd2.Cmd):
     CUSTOM_CATEGORY = 'My Custom Commands'
 
@@ -36,7 +38,9 @@ class TopLevel(cmd2.Cmd):
 
         self.self_in_py = True
 
-        self.default_category = 'cmd2 Built-in Commands'
+        self.prompt = 'J.O.B. > '
+
+        #self.default_category = 'cmd2 Built-in Commands'
 
     @cmd2.with_category(CUSTOM_CATEGORY)
     def do_intro(self, _):
