@@ -20,8 +20,9 @@ class PostExploitMenu(cmd2.Cmd):
 
     @cmd2.with_category(POST_EXPLOIT_CATEGORY)
     def do_command(self, arg):
-        self.poutput("[*] Setting command in Cookie...")
-        retValue = editcommand(arg)
+        self.poutput("[*] Setting command in Cookie..." + arg.split(" ", 1)[0] + " " + arg.split(" ", 1)[1])
+        retValue = editcommand(arg.split(" ", 1)[0], arg.split(" ", 1)[1])
+        
         if (retValue):
             self.poutput("[+] Successfully set command in Cookie!")
         else:
