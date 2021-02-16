@@ -1,7 +1,8 @@
 import cmd2
 from cmd2 import bg, fg, style
 import cmd2_submenu
-from editfile import editcommand
+from addcommand import editcommand
+from getoutput import getoutput
 
 class PostExploitMenu(cmd2.Cmd):
     POST_EXPLOIT_CATEGORY = 'Post Exploitation Commands'
@@ -22,11 +23,19 @@ class PostExploitMenu(cmd2.Cmd):
     def do_command(self, arg):
         self.poutput("[*] Setting command in Cookie..." + arg.split(" ", 1)[0] + " " + arg.split(" ", 1)[1])
         retValue = editcommand(arg.split(" ", 1)[0], arg.split(" ", 1)[1])
-        
+
         if (retValue):
             self.poutput("[+] Successfully set command in Cookie!")
         else:
             self.poutput("[-] Error setting command in Cookie")
+
+    @cmd2.with_category(POST_EXPLOIT_CATEGORY)
+    def do_output(self, arg):
+        self.poutput("[*] Getting Output for Machine..." + arg.split(" ", 1)[0])
+        retValue = getoutput(arg.split(" ", 1)[0])
+
+        if (not retValue):
+            self.poutput("[-] Error getting output for that machine")
 
 @cmd2_submenu.AddSubmenu(PostExploitMenu(), command='post-exploit', reformat_prompt="{super_prompt[0]}{super_prompt[1]}{super_prompt[2]}{super_prompt[3]}{super_prompt[4]}{super_prompt[5]} {sub_prompt}")
 class TopLevel(cmd2.Cmd):
