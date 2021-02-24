@@ -1,11 +1,25 @@
 let express = require('express'); 
 let cookieParser = require('cookie-parser'); 
+let bodyParser = require('body-parser');
+let fs = require('fs');
+
 //setup express app 
 let app = express() 
 
 var mysql = require('mysql');
 
 app.use(cookieParser()); 
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(function(req, res, next){
+  if (req.is('text/*')) {
+    req.text = '';
+    req.setEncoding('utf8');
+    req.on('data', function(chunk){ req.text += chunk });
+    req.on('end', next);
+  } else {
+    next();
+  }
+});
 
 var con = mysql.createConnection({
 	host: "localhost",
@@ -24,6 +38,14 @@ let users = {
 name : "69", 
 Age : "18"
 } 
+
+app.post('/downloadfile', (req, res)=>{
+	console.log("Body: " + req.text);
+	fs.writeFile('blah.txt', req.text, function (err) {
+		if (err) return console.log(err);
+	});
+	res.send("test download file");
+});
 
 //Route for adding cookie 
 app.get('/setuser', (req, res)=>{ 
