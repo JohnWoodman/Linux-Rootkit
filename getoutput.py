@@ -45,8 +45,8 @@ def getoutput( id ):
 			file = open(newfilename, "a")
 
 			print("command output written to file named %s.txt" % (id,))
-			for key1, value1 in output_data.items():
-				for key2, value2 in record_data.items():
+			for key1, value1 in output_data["exec_commands"].items():
+				for key2, value2 in record_data["exec_commands"].items():
 					if key1 == key2:
 						file.write("%s : %s\n" % (value2, value1))
 

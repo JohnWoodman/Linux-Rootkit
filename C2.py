@@ -3,6 +3,7 @@ from cmd2 import bg, fg, style
 import cmd2_submenu
 from addcommand import editcommand
 from getoutput import getoutput
+from downloadfile import downloadfile
 
 class PostExploitMenu(cmd2.Cmd):
     POST_EXPLOIT_CATEGORY = 'Post Exploitation Commands'
@@ -28,6 +29,16 @@ class PostExploitMenu(cmd2.Cmd):
             self.poutput("[+] Successfully set command in Cookie!")
         else:
             self.poutput("[-] Error setting command in Cookie")
+
+    @cmd2.with_category(POST_EXPLOIT_CATEGORY)
+    def do_download(self, arg):
+        self.poutput("[*] Adding download request to machine..." + arg.split(" ", 1)[0] + " " + arg.split(" ", 1)[1] + arg.split(" ", 1)[2])
+        retValue = downloadfile(arg.split(" ", 1)[0], arg.split(" ", 1)[1], arg.split(" ", 1)[2])
+
+        if (retValue):
+            self.poutput("[+] Successfully added command to the queue")
+        else:
+            self.poutput("[-] Error adding command to the queue")
 
     @cmd2.with_category(POST_EXPLOIT_CATEGORY)
     def do_output(self, arg):
