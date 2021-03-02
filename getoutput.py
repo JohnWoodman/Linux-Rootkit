@@ -80,7 +80,7 @@ def getoutput( id ):
 			#sort the results to be in chronological order
 			sorted_list = sorted(Results, key=lambda result: result.epoch_id)
 
-			for entry in sorted_list[1:]:
+			for entry in sorted_list:
 				entry.epoch_id = datetime.datetime.fromtimestamp(int(entry.epoch_id))
 				file.write("%s   %s   %s\n" % (entry.epoch_id, entry.command, entry.output))
 
