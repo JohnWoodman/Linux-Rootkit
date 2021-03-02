@@ -1,0 +1,4 @@
+2021-03-02 19:55:23   command2   output2
+2021-03-02 19:55:35   download.txt was downloaded from victim machine and stored locally at local/file/path   
+2021-03-02 19:56:48   upload.txt was uploaded to victim machine at remote/file/path   
+2021-03-02 20:32:02   command3   output3

