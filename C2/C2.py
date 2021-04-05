@@ -73,8 +73,8 @@ class PostExploitMenu(cmd2.Cmd):
 
         @cmd2.with_category(POST_EXPLOIT_CATEGORY)
         def do_shell(self, arg):
-                self.poutput("[*] Setting Port for Shell Listener..." + arg.split(" ",1)[0] + " " + arg.split(" ",1)[1])
-                retValue = toggleshell(arg.split(" ",1)[0], arg.split(" ", 1)[1])
+                self.poutput("[*] Setting Port for Shell Listener..." + arg.split(" ",1)[0] + " " + arg.split(" ",1)[1] + " " + arg.split(" ", 1)[2])
+                retValue = toggleshell(arg.split(" ",1)[0], arg.split(" ", 1)[1], arg.split(" ", 1)[2])
 
                 if (retValue):
                         self.poutput("[+] Successfully updated listening port!")
