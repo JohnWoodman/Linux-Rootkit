@@ -35,8 +35,8 @@ class PostExploitMenu(cmd2.Cmd):
 
         @cmd2.with_category(POST_EXPLOIT_CATEGORY)
         def do_download(self, arg):
-                self.poutput("[*] Adding download request to machine..." + arg.split(" ", 1)[0] + " " + arg.split(" ", 1)[1] + arg.split(" ", 1)[2])
-                retValue = downloadfile(arg.split(" ", 1)[0], arg.split(" ", 1)[1], arg.split(" ", 1)[2])
+                self.poutput("[*] Adding download request to machine..." + arg.split()[0] + " " + arg.split()[1] + arg.split()[2])
+                retValue = downloadfile(arg.split()[0], arg.split()[1], arg.split()[2])
 
                 if (retValue):
                         self.poutput("[+] Successfully added command to the queue")
@@ -45,8 +45,8 @@ class PostExploitMenu(cmd2.Cmd):
 
         @cmd2.with_category(POST_EXPLOIT_CATEGORY)
         def do_upload(self, arg):
-                self.poutput("[*] Adding upload request to machine..." + arg.split(" ", 1)[0] + " " + arg.split(" ", 1)[1] + arg.split(" ", 1)[2])
-                retValue = uploadfile(arg.split(" ", 1)[0], arg.split(" ", 1)[1], arg.split(" ", 1)[2])
+                self.poutput("[*] Adding upload request to machine..." + arg.split()[0] + " " + arg.split()[1] + arg.split()[2])
+                retValue = uploadfile(arg.split()[0], arg.split()[1], arg.split()[2])
 
                 if (retValue):
                         self.poutput("[+] Successfully added command to the queue")
@@ -73,8 +73,9 @@ class PostExploitMenu(cmd2.Cmd):
 
         @cmd2.with_category(POST_EXPLOIT_CATEGORY)
         def do_shell(self, arg):
-                self.poutput("[*] Setting Port for Shell Listener..." + arg.split(" ",1)[0] + " " + arg.split(" ",1)[1] + " " + arg.split(" ", 1)[2])
-                retValue = toggleshell(arg.split(" ",1)[0], arg.split(" ", 1)[1], arg.split(" ", 1)[2])
+                self.poutput("[*] Setting Port for Shell Listener..." + arg.split()[0] + " " + arg.split()[1] + " " + arg.split()[2])
+                print(arg)
+                retValue = toggleshell(arg.split()[0], arg.split()[1], arg.split()[2])
 
                 if (retValue):
                         self.poutput("[+] Successfully updated listening port!")

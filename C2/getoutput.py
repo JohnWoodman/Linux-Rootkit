@@ -61,21 +61,30 @@ def getoutput( id ):
 						output = Result(key2, value1, value2)
 						Results.append(output)
 
+			#append all entries for keylogging
+
 			#append all entries for downloaded files
 			for key1, value1 in record_data["exfiltrate"].items():
-				for key2, value2 in filename_data.items():
-					if key1 == key2:
-						output_string = value1 + " was downloaded from victim machine and stored locally at " + value2
-						output = Result(key2, output_string, "")
-						Results.append(output)
+				for key2, value2 in filename_data[key1].items():
+					print(key1, value1, key2, value2)
+					if value2 == "0":
+						output_string = "There was an error in downloading \"" + str(value1) + "\" from the victim machine."
+					if value2 == "1":
+						output_string = str(value1) + " was downloaded from victim machine and stored locally at \"" + str(value2) + "\""
+
+					output = Result(key1, output_string, "")
+					Results.append(output)
 
 			#append all entries for uploaded files
 			for key1, value1 in record_data["infiltrate"].items():
-				for key2, value2 in filename_data.items():
-					if key1 == key2:
-						output_string = value2 + " was uploaded to victim machine at " + value1
-						output = Result(key2, output_string, "")
-						Results.append(output)
+				for key2, value2 in filename_data[key1].items():
+					if value2 == "0":
+						output_string = "There was an error in uploading \"" + str(key2) + "\" to the victim machine."
+					if value2 == "1":
+						output_string = "\"" + str(key2) + "\" was uploaded to victim machine at " + str(value1)
+
+					output = Result(key1, output_string, "")
+					Results.append(output)
 
 			#sort the results to be in chronological order
 			sorted_list = sorted(Results, key=lambda result: result.epoch_id)
