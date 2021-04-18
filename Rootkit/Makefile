@@ -1,3 +1,5 @@
+CONFIG_MODULE_SIG=n
+
 obj-m += rootkit.o
 
 CFLAGS_rootkit.o := -DMALWARE_NAME=\"malware\"
