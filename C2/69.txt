@@ -5,3 +5,30 @@
 SSH Spraying was conducted and IP address 192.168.1.1 can be accessed using this machine's SSH Key.
 SSH Spraying was conducted and IP address 192.168.1.3 can be accessed using this machine's SSH Key.
 SSH Spraying was conducted and IP address 192.168.1.4 can be accessed using this machine's SSH Key.
+2021-04-18 18:50:51   whoami   root
+
+2021-04-18 18:51:09   ls -la   total 136
+drwx------  6 root root  4096 Apr 18 11:54 .
+drwxr-xr-x 20 root root  4096 Apr 14 15:47 ..
+-rw-------  1 root root  2841 Apr 15 14:10 .bash_history
+-rw-r--r--  1 root root  3106 Dec  5  2019 .bashrc
+drwx------  2 root root  4096 Feb  9 10:51 .cache
+drwxr-xr-x  3 root root  4096 Apr 15 13:08 .local
+-rw-r--r--  1 root root   101 Apr 18 11:54 .modules.order.cmd
+-rw-r--r--  1 root root   146 Apr 18 11:54 .Module.symvers.cmd
+-rw-r--r--  1 root root   161 Dec  5  2019 .profile
+-rw-r--r--  1 root root   183 Apr 18 11:54 .rootkit.ko.cmd
+-rw-r--r--  1 root root    79 Apr 18 11:54 .rootkit.mod.cmd
+-rw-r--r--  1 root root 30922 Apr 18 11:54 .rootkit.mod.o.cmd
+-rw-r--r--  1 root root 50160 Apr 18 11:54 .rootkit.o.cmd
+drwxr-xr-x  3 root root  4096 Apr 14 15:52 snap
+drwx------  2 root root  4096 Apr 14 15:59 .ssh
+
+2021-04-18 18:51:26   "uname -r"   
+SSH Spraying was conducted and IP address 192.168.1.1 can be accessed using this machine's SSH Key.
+SSH Spraying was conducted and IP address 192.168.1.3 can be accessed using this machine's SSH Key.
+SSH Spraying was conducted and IP address 192.168.1.4 can be accessed using this machine's SSH Key.
+SSH Spraying was conducted and IP address 192.168.1.1 can be accessed using this machine's SSH Key.
+SSH Spraying was conducted and IP address 192.168.1.3 can be accessed using this machine's SSH Key.
+SSH Spraying was conducted and IP address 192.168.1.4 can be accessed using this machine's SSH Key.
+SSH Spraying was conducted and IP address 192.168.43.1 can be accessed using this machine's SSH Key.

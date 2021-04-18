@@ -27,7 +27,7 @@ class GroupCommandsMenu(cmd2.Cmd):
         def do_command(self, arg):
                 """[group_id] [command]"""
                 self.poutput("[*] Setting group command..." + arg.split()[0] + " " + arg.split()[1])
-                retValue = groupcommands(1, arg.split()[0], arg.split()[1])
+                retValue = groupcommands(1, arg.split(" ", 1)[0], arg.split(" ", 1)[1])
 
                 if (retValue):
                         self.poutput("[+] Successfully set group command!")
